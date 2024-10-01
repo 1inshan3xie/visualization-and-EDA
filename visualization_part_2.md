@@ -169,3 +169,165 @@ weather_df |>
     ## (`geom_point()`).
 
 ![](visualization_part_2_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+## Themes
+
+``` r
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .5) +
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily tempreture(C)",
+    y = "Maximum daily tempreture(C)",
+    caption = "Data from rnova package;tempretures in 2017.") +
+  viridis::scale_color_viridis(
+    name = "Location",
+    discrete = TRUE
+  ) +
+  theme(legend.position = "bottom")
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
+#感觉像是把图例放到图的底部
+```
+
+Change the overall theme
+
+``` r
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .5) +
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily tempreture(C)",
+    y = "Maximum daily tempreture(C)",
+    caption = "Data from rnova package;tempretures in 2017.") +
+  viridis::scale_color_viridis(
+    name = "Location",
+    discrete = TRUE
+  ) +
+  theme_bw() #把背景换成白色，黑色边框
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+``` r
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .5) +
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily tempreture(C)",
+    y = "Maximum daily tempreture(C)",
+    caption = "Data from rnova package;tempretures in 2017.") +
+  viridis::scale_color_viridis(
+    name = "Location",
+    discrete = TRUE
+  ) +
+  theme_minimal() #把背景换成白色，但没有黑色边框
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .5) +
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily tempreture(C)",
+    y = "Maximum daily tempreture(C)",
+    caption = "Data from rnova package;tempretures in 2017.") +
+  viridis::scale_color_viridis(
+    name = "Location",
+    discrete = TRUE
+  ) +
+  theme_classic() #把背景换成白色(无网格），没有黑色边框
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .5) +
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily tempreture(C)",
+    y = "Maximum daily tempreture(C)",
+    caption = "Data from rnova package;tempretures in 2017.") +
+  viridis::scale_color_viridis(
+    name = "Location",
+    discrete = TRUE
+  ) +
+  ggthemes::theme_excel() +
+  theme(legend.position = "bottom") +
+  theme(legend.position = "bottom")
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+#如果想同时改变theme主题和其他东西like legend，需要将legend改变后置于theme主题改变之后
+```
+
+## Setting options
+
+``` r
+#一般画图的操作：预先设定好自己喜欢的theme和color
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal()+theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis")
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+## Data args in `geom`
+
+``` r
+central_park_df = 
+  weather_df |> 
+  filter(name == "CentralPark_NY")
+
+molokai_df = 
+  weather_df |>
+  filter(name == "Molokai_HI")
+
+ggplot(data = molokai_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point() +
+  geom_line(data = central_park_df) #用一张gplot画包含两个变量的图：散点图是molokai，line是central park
+```
+
+    ## Warning: Removed 1 row containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
