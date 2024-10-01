@@ -331,3 +331,171 @@ ggplot(data = molokai_df, aes(x = date, y = tmax, color = name)) +
     ## (`geom_point()`).
 
 ![](visualization_part_2_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+## `patchwork`
+
+faceting?
+
+``` r
+weather_df |>
+  ggplot(aes(x = tmin, fill = name)) +
+  geom_density(alpha = .5) +
+## what about facet
+  facet_grid(.~ name)
+```
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_density()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+``` r
+#按照name分开画三幅图！！
+```
+
+what happened when you want multipanel plots but can’t facet?
+
+``` r
+tmax_tmin_p = weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = .5) +
+  theme(legend.position = "none")
+
+prcp_dens_p = 
+  weather_df |> 
+  filter(prcp > 0) |> #因为不降水的时候太多了，数据聚集在0 
+  ggplot(aes(x = prcp, fill = name)) + 
+  geom_density(alpha = .5) + 
+  theme(legend.position = "none")
+
+tmax_date_p = 
+  weather_df |> 
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  theme(legend.position = "none")
+
+# side by side
+tmax_tmin_p + prcp_dens_p 
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+``` r
+tmax_tmin_p + prcp_dens_p + tmax_date_p
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_smooth()`).
+    ## Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-15-2.png)<!-- -->
+
+``` r
+# 括号内和括号外各占一半
+tmax_tmin_p + (prcp_dens_p + tmax_date_p)
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_smooth()`).
+    ## Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-15-3.png)<!-- -->
+
+``` r
+#分行
+tmax_tmin_p / (prcp_dens_p + tmax_date_p)
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_smooth()`).
+    ## Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-15-4.png)<!-- -->
+
+``` r
+(tmax_tmin_p + prcp_dens_p) / tmax_date_p
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_smooth()`).
+    ## Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-15-5.png)<!-- -->
+
+## How data manipulation happens in plot
+
+``` r
+# want to change the order of things
+weather_df |>
+  mutate(name = forcats::fct_relevel(name, c("Molokai_HI", "CentralPark_NY", "Waterhole_WA"))) |> 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
+  theme(legend.position = "bottom")
+```
+
+    ## Warning: Removed 17 rows containing non-finite outside the scale range
+    ## (`stat_ydensity()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
+What if I wanted densities for tmin and tmax simultaneously?
+
+``` r
+weather_df |>
+  filter(name == "CentralPark_NY") |>
+  pivot_longer(
+    tmax:tmin,
+    names_to = "observation",
+    values_to = "tempretures"
+  ) |>
+  ggplot(aes(x = tempretures, fill = observation)) +
+  geom_density(alpha = .5)
+```
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+``` r
+weather_df |>
+  select(name, tmax, tmin) |> 
+  pivot_longer(
+    tmax:tmin,
+    names_to = "observation", 
+    values_to = "temp") |> 
+  ggplot(aes(x = temp, fill = observation)) +
+  geom_density(alpha = .5) + 
+  facet_grid(~name) + 
+  viridis::scale_fill_viridis(discrete = TRUE)
+```
+
+    ## Warning: Removed 34 rows containing non-finite outside the scale range
+    ## (`stat_density()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
