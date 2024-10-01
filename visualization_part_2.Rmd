@@ -311,7 +311,39 @@ weather_df |>
   viridis::scale_fill_viridis(discrete = TRUE)
 ```
 
+## Revisit the pups
 
+```{r}
+pups_data = read_csv("./data_import_examples/FAS_pups.csv",na = c("NA", ".", "")) |>
+  janitor::clean_names() |>
+  mutate(sex = case_match(
+    sex, 1 ~ "male", 2 ~ "female"))
+
+litters_data = read_csv("./data_import_examples/FAS_litters.csv", na = c("NA", ".", "")) |>
+  janitor::clean_names() |>
+  separate(group, into = c("dose", "day_of_tx"), sep = 3)
+
+fas_data = left_join(pups_data, litters_data, by = "litter_number")
+
+fas_data |>
+  ggplot(aes(x = dose, y = pd_ears)) +
+  geom_violin() +
+  facet_grid(. ~ day_of_tx)
+```
+
+```{r}
+fas_data |> 
+  select(sex, dose, day_of_tx, pd_ears:pd_walk) |> 
+  pivot_longer(
+    pd_ears:pd_walk,
+    names_to = "outcome", 
+    values_to = "pn_day") |>
+  drop_na() |>
+  mutate(outcome = forcats::fct_reorder(outcome, pn_day, median))|>
+  ggplot(aes(x = dose, y = pn_day)) +
+  geom_violin() +
+  facet_grid(day_of_tx ~ outcome)
+```
 
 
 

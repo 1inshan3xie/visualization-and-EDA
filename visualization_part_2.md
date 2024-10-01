@@ -499,3 +499,66 @@ weather_df |>
     ## (`stat_density()`).
 
 ![](visualization_part_2_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+## Revisit the pups
+
+``` r
+pups_data = read_csv("./data_import_examples/FAS_pups.csv",na = c("NA", ".", "")) |>
+  janitor::clean_names() |>
+  mutate(sex = case_match(
+    sex, 1 ~ "male", 2 ~ "female"))
+```
+
+    ## Rows: 313 Columns: 6
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (1): Litter Number
+    ## dbl (5): Sex, PD ears, PD eyes, PD pivot, PD walk
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+litters_data = read_csv("./data_import_examples/FAS_litters.csv", na = c("NA", ".", "")) |>
+  janitor::clean_names() |>
+  separate(group, into = c("dose", "day_of_tx"), sep = 3)
+```
+
+    ## Rows: 49 Columns: 8
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (2): Group, Litter Number
+    ## dbl (6): GD0 weight, GD18 weight, GD of Birth, Pups born alive, Pups dead @ ...
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+``` r
+fas_data = left_join(pups_data, litters_data, by = "litter_number")
+
+fas_data |>
+  ggplot(aes(x = dose, y = pd_ears)) +
+  geom_violin() +
+  facet_grid(. ~ day_of_tx)
+```
+
+    ## Warning: Removed 18 rows containing non-finite outside the scale range
+    ## (`stat_ydensity()`).
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+``` r
+fas_data |> 
+  select(sex, dose, day_of_tx, pd_ears:pd_walk) |> 
+  pivot_longer(
+    pd_ears:pd_walk,
+    names_to = "outcome", 
+    values_to = "pn_day") |>
+  drop_na() |>
+  mutate(outcome = forcats::fct_reorder(outcome, pn_day, median))|>
+  ggplot(aes(x = dose, y = pn_day)) +
+  geom_violin() +
+  facet_grid(day_of_tx ~ outcome)
+```
+
+![](visualization_part_2_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
