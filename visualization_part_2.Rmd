@@ -1,0 +1,214 @@
+---
+title: "visualization"
+subtitle: " Part 1"
+author: "linshan"
+date: "2024-09-26"
+output: github_document
+---
+```{r setup}
+library(tidyverse)
+library(ggridges)
+```
+
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USW00022534", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2021-01-01",
+    date_max = "2022-12-31") |>
+  mutate(
+    name = case_match(
+      id, 
+      "USW00094728" ~ "CentralPark_NY", 
+      "USW00022534" ~ "Molokai_HI",
+      "USS0023B17S" ~ "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) |>
+  select(name, id, everything())
+```
+
+## scatterplots!!
+ create the first scatter plot
+```{r}
+##只是指定了横纵轴，还没说要画什么样的图
+ggplot(weather_df, aes(x = tmin, y = tmax))
+# geom_point 在坐标轴的基础上加了散点
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+new approach, same plot
+
+```{r}
+#使用管道
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+save and edit a plot object
+```{r}
+#可以把画的图先存起来，再在这幅图的基础上添加
+ggp_weather = 
+  weather_df |>
+  ggplot(aes(x = tmin, y = tmax))
+
+ggp_weather + geom_point()
+```
+
+## Advanced scatter plots
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) + 
+  geom_point()
+```
+或者也可以写成
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name))
+```
+
+加入geom_smooth，这个代码下，只画一条smooth
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name)) +
+  geom_smooth(se = FALSE)
+```
+
+换一种写法，可以看到，smooth的时候针对每个name各画了一条
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE)
+```
+
+facet things
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = .5, size = 0.8) +
+  geom_smooth(se = FALSE, size = 2) + 
+  facet_grid(. ~ name)
+#alpha = .5的意思是让点的透明度变成0.5
+#point处的size指的是point的大小，smooth处的size指的是线的粗细
+```
+
+combine elements and try something new
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point(aes(size = prcp), alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ name)
+```
+size = prep的意思是按照prep的大小画这些点
+
+## some small notes
+how many geoms have to exist?
+you can have whether geoms you want.
+```{r}
+#可以直接画拟合曲线
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_smooth(se = FALSE) 
+```
+
+you can use a neat geom!
+```{r}
+ggplot(weather_df, aes(x = tmax, y = tmin)) + 
+  geom_hex()
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmax, y = tmin)) + 
+  geom_bin2d()
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmax, y = tmin)) + 
+  geom_density2d() +
+  geom_point(alpha = .2)
+```
+
+## univariate plots
+Histogram
+```{r}
+ggplot(weather_df, aes(x = tmax)) + 
+  geom_histogram()
+#设置了一个x轴变量，即为tmax
+```
+
+add color 
+```{r}
+ggplot(weather_df, aes(x = tmax, color = name)) + 
+  geom_histogram()
+#发现变色的是每一个条形物的边框
+ggplot(weather_df, aes(x = tmax, fill = name)) + 
+  geom_histogram()
+#就把填充颜色按照name涂成了不同的
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmax, fill = name)) + 
+  geom_histogram() +
+  facet_grid(. ~ name)
+# 按照name画成三张图了
+```
+
+```{r}
+ggplot(weather_df, aes(x = tmax, fill = name)) + 
+  geom_histogram(position = "dodge", binwidth = 2)
+#position = "dodge"把不同name的同一个区间内的条状并列放置,binwidth调整每一条的宽度
+```
+
+show some new geometry
+```{r}
+ggplot(weather_df, aes(x = tmax, fill = name)) + 
+  geom_density(alpha = .4, adjust = .5, color = "blue")
+```
+
+boxplot
+```{r}
+ggplot(weather_df, aes(x = name, y = tmax)) + 
+  geom_boxplot()
+#在画box plot的时候，x轴可以不是数字型的变量，可以是分类变量
+```
+
+violin plot
+```{r}
+ggplot(weather_df, aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), alpha = .5) + 
+  stat_summary(fun = "median", color = "blue")
+#violin plot在展示分布的同时展示了密度（shape）
+#stat_summary fun = "median"
+```
+
+ridge plot
+```{r}
+ggplot(weather_df, aes(x = tmax, y = name)) + 
+  geom_density_ridges(scale = .85)
+```
+
+## save and embed plots
+1st save a scatter plot
+```{r}
+ggp_weather = 
+  ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) 
+ggsave("wheater_plot.pdf", ggp_weather, width = 8, height = 5)
+```
+
+what about embedding
+```{r fig.width=12, fig.height=6}
+ggp_weather
+```
+
+```{r fig.width=6, fig.height=3}
+ggp_weather
+```
+
+
+
+
+
+
+
