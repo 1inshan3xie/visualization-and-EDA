@@ -1,0 +1,138 @@
+---
+title: "exploritory analysis"
+subtitle: " Part 2"
+author: "linshan"
+date: "2024-09-26"
+output: github_document
+---
+```{r setup}
+library(tidyverse)
+```
+
+## Load the data
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USW00022534", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2021-01-01",
+    date_max = "2022-12-31") |>
+  mutate(
+    name = case_match(
+      id, 
+      "USW00094728" ~ "CentralPark_NY", 
+      "USW00022534" ~ "Molokai_HI",
+      "USS0023B17S" ~ "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10,
+    month = lubridate::floor_date(date, unit = "month")) |>
+  select(name, id, everything())
+```
+
+## Setting options
+
+```{r eval = FALSE}
+#一般画图的操作：预先设定好自己喜欢的theme和color
+library(tidyverse)
+
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
+
+theme_set(theme_minimal()+theme(legend.position = "bottom"))
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis")
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
+```
+
+Let us make some plots
+```{r}
+weather_df |> 
+  ggplot(aes(x = prcp)) + 
+  geom_histogram()
+```
+发现大部分降水集中在0附近以及500一下，但有一些很大的，接下来，看看都是什么
+```{r}
+weather_df |> 
+  filter(prcp >= 1000)
+```
+
+```{r}
+weather_df |> 
+  filter(tmax >= 20, tmax <= 30) |> 
+  ggplot(aes(x = tmin, y = tmax, color = name, shape = name)) + 
+  geom_point(alpha = .75)
+```
+
+## group_by
+```{r}
+weather_df |>
+  group_by(name, month)
+#一共3个name，24个month 所以groupby（name，month）有72组
+```
+
+counting stuff
+```{r}
+weather_df |>
+  group_by(month) |>
+  summarize(n_obs = n())
+```
+
+```{r}
+weather_df |>
+  group_by(name, month) |>
+  summarize(n_obs = n())
+```
+
+```{r}
+weather_df |>
+  count(name)
+```
+
+```{r}
+weather_df |>
+  pull(month) |> 
+  table()
+```
+
+
+## 2*2 table
+```{r}
+weather_df |> 
+  drop_na(tmax) |> 
+  mutate(
+    cold = case_when(
+      tmax <  5 ~ "cold",
+      tmax >= 5 ~ "not_cold",
+      TRUE      ~ ""
+  )) |> 
+  group_by(name, cold) |> 
+  summarize(count = n())
+```
+
+janitor::tabyl
+```{r}
+weather_df |> 
+  drop_na(tmax) |> 
+  mutate(cold = case_when(
+    tmax <  5 ~ "cold",
+    tmax >= 5 ~ "not_cold",
+  )) |> 
+  janitor::tabyl(name, cold)
+```
+
+
+
+
+
+
+
+
+
+
