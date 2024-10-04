@@ -166,9 +166,107 @@ weather_df |>
   knitr::kable(digits = 1)
 ```
 
+## grouped mutate
+在group后再mutate的话，算出来的结果是各个分组内的
+```{r}
+weather_df |>
+  group_by(name) |>
+  mutate(
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    centered_tmax = tmax - mean_tmax) |> 
+  ggplot(aes(x = date, y = centered_tmax, color = name)) + 
+    geom_point() 
+```
 
+## Windows functions
+Find the hottest/coldest day
+```{r}
+weather_df |>
+  group_by(name, month) |>
+  mutate(temp_ranking = min_rank(tmax)) |>
+  filter(temp_ranking < 4)
+```
 
+```{r}
+weather_df |>
+  group_by(name) |>
+  mutate(temp_rank = min_rank(desc(tmax)))|>
+  filter(temp_rank < 4)
+```
+min_rank 表示按从小到达排序，最小的被rank为1.
+而如果在min——rank后面加上desc，则表示倒叙，最大的被rank为1
 
+```{r}
+weather_df |>
+  group_by(name) |>
+  filter(min_rank(tmax) < 4)
+```
+这样的话就可以不通过建立新变量temp_rank，也可以筛选出最大/最小的几个
+
+## lag function
+把tmax这列的变量向下移动一格，然后行程lagged_temp
+```{r}
+weather_df |>
+  group_by(name) |>
+  mutate(lagged_tmax = lag(tmax),
+         temp_change = tmax - lagged_tmax) |>
+  filter(min_rank(temp_change) < 3)
+```
+
+```{r}
+weather_df |>
+  group_by(name) |>
+  mutate(lagged_tmax = lag(tmax),
+         temp_change = tmax - lagged_tmax) |>
+  summarize(
+    sd_tmax_change = sd(temp_change, na.rm = TRUE)
+  )
+```
+
+## examples using the formar data set.
+For Pulse data
+```{r}
+library(haven)
+pulse_df = read_sas("./data_import_examples/public_pulse_data.sas7bdat") |>
+  janitor::clean_names() |>
+  pivot_longer(
+    bdi_score_bl:bdi_score_12m,
+    names_to = "visit",
+    values_to = "bdi_score",
+    names_prefix = "bdi_score"
+  ) |>
+  group_by(visit) |>
+  summarize(
+    mean_bdi = mean(bdi_score, na.rm = TRUE),
+    median_bdi = median(bdi_score, na.rm = TRUE)
+  ) |>
+  knitr::kable(digits = 1)
+```
+
+## litter_df
+```{r}
+pup_data = 
+  read_csv("./data_import_examples/FAS_pups.csv", na = c("NA",".","")) |>
+  janitor::clean_names() |>
+  mutate(sex = recode(sex, `1` = "male", `2` = "female")) 
+
+litters_data = read_csv("./data_import_examples/FAS_litters.csv",na = c("NA",".","")) |>
+  janitor::clean_names() |>
+  separate(group, into = c("dose", "day_of_tx"), sep = 3)
+
+fas_df = left_join(pup_data, litters_data, by = "litter_number")
+
+fas_df |>
+  group_by(dose, day_of_tx) |>
+  summarize(
+  mean_pivot = mean(pd_pivot, na.rm = TRUE)  
+  ) |>
+  pivot_wider(
+    names_from = day_of_tx,
+    values_from = mean_pivot
+  ) |>
+  knitr::kable(digits = 2)
+```
 
 
 
